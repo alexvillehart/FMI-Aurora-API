@@ -29,9 +29,7 @@ https://www.ilmatieteenlaitos.fi/revontulet-ja-avaruussaa
 
   
 
-### Tuetut asemat (stationid):
-
-  
+### Tuetut asemat _{stationid}_
 
 - KEV (Kevo)
 
@@ -87,13 +85,11 @@ Portti: 3005
 
 GET `localhost:{port}/latest/{stationid}`
 
-  
 
-stationid -> kolmikirjaiminen tunniste (esim. NUR).
 
   
 
-## JSON-vastaus
+### JSON-vastaus
 
   
 
@@ -114,3 +110,8 @@ stationid -> kolmikirjaiminen tunniste (esim. NUR).
     "exceedsThreshold": false // tosi jos mitattu arvo on sama tai yli raja-arvon.
     
     }
+
+### Rate-limiting
+
+Kyselyiden määrä on rajoitettu 10 kyselyyn/15min, eli 40 kyselyyn tunnissa.
+Tiedot päivittyvät ilmatieteen laitoksen palvelussa 10 minuutin välein, joten on turhaa yrittää hakea useammin kuin 10 minuutin välein dataa.
