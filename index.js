@@ -1,6 +1,7 @@
 import express from 'express'
 import axios from 'axios'
 
+// timestamp-arvon muuttamiseen.
 process.env['TZ'] = 'Europe/Helsinki'
 
 const app = express()
@@ -22,23 +23,29 @@ const stations = {
         "NUR":{"id":"NUR","threshold":0.30,"names":{"fi":"Nurmijärvi","en":"Nurmijärvi","sv":"Nurmijärvi"}},
         "TAR":{"id":"TAR","threshold":0.23,"names":{"fi":"Tartto","en":"Tartu","sv":"Tartu"}}
     };
-const validStations = ['KEV','KIL','IVA','MUO','SOD','PEL','RAN','OUJ','MEK','HAN','NUR','TAR']
 
 app.listen(port, () => {
-    console.log('FMI Parser is listening on port ' + port)
+    console.log('[APP] FMI Parser is listening on port ' + port)
 })
 
 app.get('/latest/:station/', function(req, res) {
-    var station = req.params.station.toUpperCase()
-    if(validStations.includes(station)) {
-        console.log("=Requested latest measurement for station " + req.params.station)
-        console.log("=Station name: " + stations[station].names.fi + " Threshold " + stations[station].threshold)
+    // validoi käyttäjän syöttö ja varmista että löytyy saatavilla olevista asemista.
+    let validation = /\b([A-Za-z]{3})\b/g
+    let station = req.params.station.toUpperCase()
+    if(station.match(validation) && station in stations) {
+        console.log("[GET /latest/:station] User requested details for station: " + station)
         return getLatestMeasurement(station).then((response) => {
             res.send(response)
         })
+        .catch((error) => {
+            console.log("[ERROR] " + error.message)
+            var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
+            res.status(500).send(errorMsg)
+        })
     } else {
-        console.log("Invalid request: No station with the code (" + station + ") found.") 
-        res.sendStatus(400)
+        console.log("[ERROR] User requested an unknown station or gave invalid input: " + station) 
+        var errorMsg = {"error":"Invalid user input"}
+        res.status(400).send(errorMsg)
     }
 })
 
@@ -49,27 +56,26 @@ app.get('/latest/:station/', function(req, res) {
     fi-name: Suomenkielinen nimi "Nurmijärvi"
     value: Mitattu magneettikentän arvo
     threhsold: Raja-arvo jonka FMI on määrittänyt asemalle jolloin revontulien mahdollisuus on korkea
-    timestamp: Epoch (ms) aikaleima UTC-aikaan
+    timestamp: Ihmisen luettavissa olettava kellonaika suomen aikaa.
+    timestamp_epoch: Epoch (ms) aikaleima UTC-aikaan
     exceedsThreshold: boolean, true jos yrittää raja-arvon, false jos ei.
 */
 
 async function getLatestMeasurement(station) {
     return await axios.get(request_uri)
       .then(function(response) {
-        var data = response.data[station]
-        var measurement = data.dataSeries[data.dataSeries.length-1]
-        var timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
-        var value = measurement[1]
-        var d = new Date(measurement[0])
-        var hd = d.toISOString().replace(/T/, ' ').replace(/\..+/, '')
-        var thresholdAlert = (value >= stations[station].threshold) ? true : false
-        return {"id":station,"fi-name":stations[station].names.fi,"value":value,"threshold":stations[station].threshold,"timestamp":hd,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
+        let measurement = response.data[station].dataSeries[response.data[station].dataSeries.length-1]
+        let timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
+        let humanTimestamp = new Date(measurement[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+        let thresholdAlert = (measurement[1] >= stations[station].threshold) ? true : false
+        return {"id":station,"fi-name":stations[station].names.fi,"value":measurement[1],"threshold":stations[station].threshold,"timestamp":humanTimestamp,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
+      })
+      .catch(function(error) {
+        throw error
       })
 }
 
-
 // Korjaa FMI:n bugin jossa epoch-aikaleima annetaan UTC muodossa mutta suomen aikaan.
 function getTimezoneOffsetInMlliseconds() {
-    var d = new Date(Date.now())
-    return d.getTimezoneOffset() * 60000
+    return new Date(Date.now()).getTimezoneOffset() * 60000
 }
