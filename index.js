@@ -60,10 +60,10 @@ async function getLatestMeasurement(station) {
         var measurement = data.dataSeries[data.dataSeries.length-1]
         var timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
         var value = measurement[1]
-        var d = new Date(timestamp)
+        var d = new Date(measurement[0])
+        var hd = d.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         var thresholdAlert = (value >= stations[station].threshold) ? true : false
-        console.log("Converted:" + d)
-        return {"id":station,"fi-name":stations[station].names.fi,"value":value,"threshold":stations[station].threshold,"timestamp":timestamp,"exceedsThreshold": thresholdAlert}
+        return {"id":station,"fi-name":stations[station].names.fi,"value":value,"threshold":stations[station].threshold,"timestamp":hd,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
       })
 }
 
