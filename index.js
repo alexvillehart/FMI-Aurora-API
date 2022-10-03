@@ -31,14 +31,19 @@ app.listen(port, () => {
 app.get('/latest/:station/', function(req, res) {
     var station = req.params.station.toUpperCase()
     if(validStations.includes(station)) {
-        console.log("=Requested latest measurement for station " + req.params.station)
-        console.log("=Station name: " + stations[station].names.fi + " Threshold " + stations[station].threshold)
+        console.log("[GET /latest/:station] User requested details for station: " + station)
         return getLatestMeasurement(station).then((response) => {
             res.send(response)
         })
+        .catch((error) => {
+            console.log("[ERROR] " + error.message)
+            var errorMsg = {"error":"something went wrong, possibly with the FMI CDN"}
+            res.status(500).send(errorMsg)
+        })
     } else {
         console.log("Invalid request: No station with the code (" + station + ") found.") 
-        res.sendStatus(400)
+        var errorMsg = {"error":"Invalid station"}
+        res.status(400).send(errorMsg)
     }
 })
 
@@ -64,6 +69,9 @@ async function getLatestMeasurement(station) {
         var hd = d.toISOString().replace(/T/, ' ').replace(/\..+/, '')
         var thresholdAlert = (value >= stations[station].threshold) ? true : false
         return {"id":station,"fi-name":stations[station].names.fi,"value":value,"threshold":stations[station].threshold,"timestamp":hd,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
+      })
+      .catch(function(error) {
+        throw error
       })
 }
 
