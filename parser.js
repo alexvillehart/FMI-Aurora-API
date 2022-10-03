@@ -48,6 +48,10 @@ app.listen(port, () => {
 // Debugaamista varten
 app.get('/ip', (request, response) => response.send(request.ip))
 
+app.get('/', function(req, res) {
+    res.status(404).send('Resources asked for not found.')
+})
+
 app.get('/latest/:station/', function(req, res) {
     // validoi käyttäjän syöttö ja varmista että löytyy saatavilla olevista asemista.
     let validation = /\b([A-Za-z]{3})\b/g
