@@ -19,17 +19,11 @@ Sovellus hakee Ilmatieteen laitoksen magneettikentän viimeisimmän mittauksen v
 
   
 
-Tuettujen mittauspisteiden sijainnin näet täältä
+Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](https://www.ilmatieteenlaitos.fi/revontulet-ja-avaruussaa)
 
   
 
-https://www.ilmatieteenlaitos.fi/revontulet-ja-avaruussaa
-
-  
-
-  
-
-### Tuetut asemat _{stationid}_
+### Tuetut asemat _(stationid)_
 
 - KEV (Kevo)
 
@@ -81,9 +75,7 @@ https://www.ilmatieteenlaitos.fi/revontulet-ja-avaruussaa
 
 ### Toiminta
 
-Portti: 3005
-
-GET `localhost:{port}/latest/{stationid}`
+`GET /latest/:stationid`
 
 
 
@@ -95,23 +87,31 @@ GET `localhost:{port}/latest/{stationid}`
 
     {
     
-    "id": "NUR", // Aseman tunniste, jolla tiedot haettiin
+    "id": "NUR",
+    // Aseman tunniste, jolla tiedot haettiin
     
-    "fi-name": "Nurmijärvi", // Suomenkielinen aseman nimi
+    "fi-name": "Nurmijärvi",
+    // Suomenkielinen aseman nimi
     
-    "value": 0.023, // Mitattu arvo nT/s
+    "value": 0.023, 
+    // Mitattu arvo nT/s
     
-    "threshold": 0.3, // FMI:n määritelty raja-arvo nT/s
+    "threshold": 0.3, 
+    // FMI:n määritelty raja-arvo nT/s
     
-    "timestamp": "2022-10-03 22:20:00", // Kellonaika, jolloin havainto tehty, kellonaika perustuu env-muuttujan aikavyöhykkeeseen
+    "timestamp": "2022-10-03 22:20:00", 
+    // Kellonaika, jolloin havainto tehty suomen aikana (GMT +3 kesällä ja GMT +2 talvella)
     
-    "timestamp_epoch": 1664824800000, // UTC Aikaleima
+    "timestamp_epoch": 1664824800000,
+    // UTC Aikaleima
     
-    "exceedsThreshold": false // tosi jos mitattu arvo on sama tai yli raja-arvon.
+    "exceedsThreshold": false
+    // Tosi jos mitattu arvo on sama tai yli raja-arvon.
     
     }
 
 ### Rate-limiting
 
 Kyselyiden määrä on rajoitettu 10 kyselyyn/15min, eli 40 kyselyyn tunnissa.
-Tiedot päivittyvät ilmatieteen laitoksen palvelussa 10 minuutin välein, joten on turhaa yrittää hakea useammin kuin 10 minuutin välein dataa.
+
+Havainnot päivittyvät ilmatieteen laitoksen sivuille 10 minuutin välein. 
