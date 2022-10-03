@@ -46,7 +46,7 @@ app.listen(port, () => {
 })
 
 // Debugaamista varten
-app.get('/ip', (request, response) => response.send(request.ip))
+app.get('/ip', (req, res) => res.send(req.ip))
 
 app.get('/', function(req, res) {
     res.status(404).send('Resources asked for not found.')
@@ -57,17 +57,17 @@ app.get('/latest/:station/', function(req, res) {
     let validation = /\b([A-Za-z]{3})\b/g
     let station = req.params.station.toUpperCase()
     if(station.match(validation) && station in stations) {
-        console.log("[GET /latest/:station] User requested details for station: " + station)
+        console.log(UTCTimestamp() + " | " + req.ip + " [GET /latest/:station] User requested details for station: " + station)
         return getLatestMeasurement(station).then((response) => {
             res.send(response)
         })
         .catch((error) => {
-            console.log("[ERROR] " + error.message)
+            console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] " + error.message)
             var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
             res.status(500).send(errorMsg)
         })
     } else {
-        console.log("[ERROR] User requested an unknown station or gave invalid input: " + station) 
+        console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] User requested an unknown station or gave invalid input: " + station) 
         var errorMsg = {"error":"Invalid user input"}
         res.status(400).send(errorMsg)
     }
@@ -102,4 +102,10 @@ async function getLatestMeasurement(station) {
 // Korjaa FMI:n bugin jossa epoch-aikaleima annetaan UTC muodossa mutta suomen aikaan.
 function getTimezoneOffsetInMlliseconds() {
     return new Date(Date.now()).getTimezoneOffset() * 60000
+}
+
+function UTCTimestamp() {
+    let date = new Date(Date.now())
+    let timestamp = date.getUTCDate() + "." + date.getUTCMonth() + "." + date.getUTCFullYear() + " " + date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds() + "Z"
+    return timestamp
 }
