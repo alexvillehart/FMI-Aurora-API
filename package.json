@@ -1,0 +1,17 @@
+{
+  "name": "aurora-borealis",
+  "version": "1.0.0",
+  "description": "Parse FMI Aurora Borealis data to get latest value",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run": "node index.js"
+  },
+  "author": "Alex Haaja",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "express": "^4.18.1"
+  }
+}
