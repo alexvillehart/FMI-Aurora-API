@@ -45,6 +45,9 @@ app.listen(port, () => {
     console.log('[APP] FMI Parser is listening on port ' + port)
 })
 
+// Debugaamista varten
+app.get('/ip', (request, response) => response.send(request.ip))
+
 app.get('/latest/:station/', function(req, res) {
     // validoi käyttäjän syöttö ja varmista että löytyy saatavilla olevista asemista.
     let validation = /\b([A-Za-z]{3})\b/g
