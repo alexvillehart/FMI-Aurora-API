@@ -48,10 +48,15 @@ Portti: 3005
 Station = kolmikirjaiminen tunniste (esim. NUR).
 
 Palauttaa JSON-arvoina aseman tunnisteen, suomenkielisen nimen, mitatun arvon, asemalle asetetun raja-arvon, aikaleiman UTC-ajassa sekä true/false arvon jos raja-arvo ylittyy.
-**JSON vastaus**
 
-    id: lyhyttunniste (esim. NUR)
-    fi-name: suomenkielinen nimi
-    value: mitattu magneettikentän arvo (nT/s)
-    threshold: FMI:n määrittelemä raja-arvo asemalle
-    exceedsThreshold: palauttaa tosi/epätosi jos raja-arvo ylittyy
+## JSON-vastaus
+
+{
+	"id": "NUR", // Aseman tunniste, jolla tiedot haettiin
+	"fi-name": "Nurmijärvi", // Suomenkielinen aseman nimi
+	"value": 0.023, // Mitattu arvo nT/s 
+	"threshold": 0.3, // FMI:n määritelty raja-arvo nT/s
+	"timestamp": "2022-10-03 22:20:00", // Kellonaika, jolloin havainto tehty, kellonaika perustuu env-muuttujan aikavyöhykkeeseen
+	"timestamp_epoch": 1664824800000, // UTC Aikaleima
+	"exceedsThreshold": false // tosi jos mitattu arvo on sama tai yli raja-arvon.
+}
