@@ -5,6 +5,8 @@ process.env['TZ'] = 'Europe/Helsinki'
 
 const app = express()
 const port = 3005
+
+// Parametrit haettu FMI:n sivuilta 3.10.2022
 const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-graphs/serve-data.php'
 const stations = {
         "KEV":{"id":"KEV","threshold":0.57,"names":{"fi":"Kevo","en":"Kevo","sv":"Kevo"}},
@@ -20,7 +22,6 @@ const stations = {
         "NUR":{"id":"NUR","threshold":0.30,"names":{"fi":"Nurmijärvi","en":"Nurmijärvi","sv":"Nurmijärvi"}},
         "TAR":{"id":"TAR","threshold":0.23,"names":{"fi":"Tartto","en":"Tartu","sv":"Tartu"}}
     };
-    
 const validStations = ['KEV','KIL','IVA','MUO','SOD','PEL','RAN','OUJ','MEK','HAN','NUR','TAR']
 
 app.listen(port, () => {
