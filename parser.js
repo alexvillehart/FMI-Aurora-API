@@ -1,11 +1,25 @@
 import express from 'express'
 import axios from 'axios'
+import rateLimit from 'express-rate-limit'
 
 // timestamp-arvon muuttamiseen.
 process.env['TZ'] = 'Europe/Helsinki'
 
 const app = express()
 const port = 3005
+
+/*
+    API-kyselyiden rajoittaminen 10 kyselyyn per 15min per IP-osoite.
+    Koska data päivittyy 10 minuutin välein, turha kysellä tietoja joka sekunti.
+    Eli effektiivinen raja on 40 kyselyä tunnissa. 
+*/
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minuuttia
+    max: 10,
+    message: {'error': 'Too many requests, try again later.'},
+    standardHeaders: true,
+    legacyHeaders: false,
+})
 
 // Parametrit haettu FMI:n sivuilta 3.10.2022
 const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-graphs/serve-data.php'
@@ -24,6 +38,9 @@ const stations = {
         "TAR":{"id":"TAR","threshold":0.23,"names":{"fi":"Tartto","en":"Tartu","sv":"Tartu"}}
     };
 
+// Proxyjen määrä
+app.set('trust proxy', 1)
+app.use(limiter)
 app.listen(port, () => {
     console.log('[APP] FMI Parser is listening on port ' + port)
 })
@@ -53,7 +70,7 @@ app.get('/latest/:station/', function(req, res) {
 /*
     JSON muodossa
     id: lyhytunniste (esim. NUR)
-    fi-name: Suomenkielinen nimi "Nurmijärvi"
+    fi-name: Suomenkielinen nimi "Nurmijärvi"m
     value: Mitattu magneettikentän arvo
     threhsold: Raja-arvo jonka FMI on määrittänyt asemalle jolloin revontulien mahdollisuus on korkea
     timestamp: Ihmisen luettavissa olettava kellonaika suomen aikaa.
