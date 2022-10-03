@@ -57,17 +57,17 @@ app.get('/latest/:station/', function(req, res) {
     let validation = /\b([A-Za-z]{3})\b/g
     let station = req.params.station.toUpperCase()
     if(station.match(validation) && station in stations) {
-        console.log("[GET /latest/:station] User (" + request.ip +") requested details for station: " + station)
+        console.log("[GET /latest/:station] User requested details for station: " + station)
         return getLatestMeasurement(station).then((response) => {
             res.send(response)
         })
         .catch((error) => {
-            console.log("[ERROR] (" + request.ip + ")"  + error.message)
+            console.log("[ERROR] " + error.message)
             var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
             res.status(500).send(errorMsg)
         })
     } else {
-        console.log("[ERROR] User (" + request.ip + ") requested an unknown station or gave invalid input: " + station) 
+        console.log("[ERROR] User requested an unknown station or gave invalid input: " + station) 
         var errorMsg = {"error":"Invalid user input"}
         res.status(400).send(errorMsg)
     }
