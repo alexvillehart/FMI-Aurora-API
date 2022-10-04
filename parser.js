@@ -53,25 +53,70 @@ app.get('/', function(req, res) {
 })
 
 app.get('/latest/:station/', function(req, res) {
-    // validoi käyttäjän syöttö ja varmista että löytyy saatavilla olevista asemista.
-    let validation = /\b([A-Za-z]{3})\b/g
     let station = req.params.station.toUpperCase()
-    if(station.match(validation) && station in stations) {
+    if(validateUserInput(station)) {
         console.log(UTCTimestamp() + " | " + req.ip + " [GET /latest/:station] User requested details for station: " + station)
         return getLatestMeasurement(station).then((response) => {
-            res.send(response)
+            return res.status(200).send(response)
         })
         .catch((error) => {
             console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] " + error.message)
             var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
-            res.status(500).send(errorMsg)
+            return res.status(500).send(errorMsg)
         })
     } else {
         console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] User requested an unknown station or gave invalid input: " + station) 
         var errorMsg = {"error":"Invalid user input"}
-        res.status(400).send(errorMsg)
+        return res.status(400).send(errorMsg)
     }
 })
+
+app.get('/history/:station', function(req, res) {
+    let station = req.params.station.toUpperCase()
+    if(validateUserInput(station)) {
+        console.log(UTCTimestamp() + " | " + req.ip + " [GET /history/:station] User requested history for station: " + station)
+        return getMeasurementHistory(station).then((response) => {
+            return res.status(200).send(response)
+        })
+        .catch((error) => {
+            console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] " + error.message)
+            var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
+            return res.status(500).send(errorMsg)
+        })
+    } else {
+        console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] User requested an unknown station or gave invalid input: " + station) 
+        var errorMsg = {"error":"Invalid user input"}
+        return res.status(400).send(errorMsg)
+    }
+})
+
+// Palauttaa aseman viimeisen 24h havainnot JSON muodossa
+/*
+    id: lyhyttunniste (esim. NUR)
+    station_details: Kootut tiedot asemasta.
+    values: {
+        [epoch_aikaleima, mitattu_arvo]
+    }
+
+*/
+
+async function getMeasurementHistory(station) {
+    return await axios.get(request_uri)
+        .then((response) => {
+            let measurements = response.data[station].dataSeries
+            for(const i in measurements) {
+                // Jotta datan käsittely olisi pikkasen helpompaa, muunnetaan taas aikaleimat oikeaan UTC aikaan, eikä suomen aikaan.
+                // TODO: Voisi laittaa tähän jonkun flagin/käyttäjäpyynnön jotta käyttäjä voi valita UTC/Suomen ajan väliltä.
+                // Vaihtoehtoisesti voitaisiin muuttaa nuo timestamp_epoch ajat myös perinteiseen ISO-muotoon, jotta datan saaminen taulukkoon olisi järkevämpää(?)
+                measurements[i][0] = measurements[i][0] + getTimezoneOffsetInMlliseconds()
+            }
+            return {"id":station,"station_details":stations[station],"values":measurements}
+        })
+        .catch((error) => {
+            throw error
+        })
+}
+
 
 // Palauttaa viimeisimmän havainnon ja siihen liittyvät arvot
 /*
@@ -87,16 +132,22 @@ app.get('/latest/:station/', function(req, res) {
 
 async function getLatestMeasurement(station) {
     return await axios.get(request_uri)
-      .then(function(response) {
+      .then((response) => {
         let measurement = response.data[station].dataSeries[response.data[station].dataSeries.length-1]
         let timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
         let humanTimestamp = new Date(measurement[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
         let thresholdAlert = (measurement[1] >= stations[station].threshold) ? true : false
         return {"id":station,"fi-name":stations[station].names.fi,"value":measurement[1],"threshold":stations[station].threshold,"timestamp":humanTimestamp,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
       })
-      .catch(function(error) {
+      .catch((error) => {
         throw error
       })
+}
+
+function validateUserInput(input) {
+    let validation = /\b([A-Za-z]{3})\b/g
+    let station = input.toUpperCase()
+    return (station.match(validation) && station in stations) ? true : false
 }
 
 // Korjaa FMI:n bugin jossa epoch-aikaleima annetaan UTC muodossa mutta suomen aikaan.
