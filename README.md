@@ -73,15 +73,16 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
 
   
 
-### Toiminta
+## Toiminta
 
-`GET /latest/:stationid`
+###`GET /latest/:stationid`
 
-
+Hakee yksittäiseltä asemalta uusimman arvon.
+Arvot mitataan 10 minuutin välein.
 
   
 
-### JSON-vastaus
+#### JSON-vastaus
 
   
 
@@ -109,6 +110,33 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
     // Tosi jos mitattu arvo on sama tai yli raja-arvon.
     
     }
+  
+
+###`GET /history/:stationId`
+Hakee yksittäisen aseman viimeisen 24 tunnin ajalta mitatut arvot.
+Aikaleima on UTC-aika.
+
+#### JSON-vastaus
+
+    {
+	"id": "NUR",
+	"station_details": {
+		"id": "NUR",
+		"threshold": 0.3,
+		"names": {
+			"fi": "Nurmijärvi",
+			"en": "Nurmijärvi",
+			"sv": "Nurmijärvi"
+		}
+	},
+	"values": [
+		[
+			1664757600000,
+			0.08
+		],
+            [jne jne.]
+	]
+}
 
 ### Rate-limiting
 
