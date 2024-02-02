@@ -24,19 +24,127 @@ const limiter = rateLimit({
 // Parametrit haettu FMI:n sivuilta 3.10.2022
 const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-graphs/serve-data.php'
 const stations = {
-        "KEV":{"id":"KEV","threshold":0.57,"names":{"fi":"Kevo","en":"Kevo","sv":"Kevo"}},
-        "KIL":{"id":"KIL","threshold":0.56,"names":{"fi":"Kilpisjärvi","en":"Kilpisjärvi","sv":"Kilpisjärvi"}},
-        "IVA":{"id":"IVA","threshold":0.53,"names":{"fi":"Ivalo","en":"Ivalo","sv":"Ivalo"}},
-        "MUO":{"id":"MUO","threshold":0.52,"names":{"fi":"Muonio","en":"Muonio","sv":"Muonio"}},
-        "SOD":{"id":"SOD","threshold":0.50,"names":{"fi":"Sodankylä","en":"Sodankylä","sv":"Sodankylä"}},
-        "PEL":{"id":"PEL","threshold":0.49,"names":{"fi":"Pello","en":"Pello","sv":"Pello"}},
-        "RAN":{"id":"RAN","threshold":0.45,"names":{"fi":"Ranua","en":"Ranua","sv":"Ranua"}},
-        "OUJ":{"id":"OUJ","threshold":0.42,"names":{"fi":"Oulujärvi","en":"Oulujärvi","sv":"Oulujärvi"}},
-        "MEK":{"id":"MEK","threshold":0.36,"names":{"fi":"Mekrijärvi","en":"Mekrijärvi","sv":"Mekrijärvi"}},
-        "HAN":{"id":"HAN","threshold":0.35,"names":{"fi":"Hankasalmi","en":"Hankasalmi","sv":"Hankasalmi"}},
-        "NUR":{"id":"NUR","threshold":0.30,"names":{"fi":"Nurmijärvi","en":"Nurmijärvi","sv":"Nurmijärvi"}},
-        "TAR":{"id":"TAR","threshold":0.23,"names":{"fi":"Tartto","en":"Tartu","sv":"Tartu"}}
-    };
+    "KEV": {
+        "id": "KEV",
+        "threshold1": 55,
+        "threshold2": 165,
+        "names": {
+            "fi": "Kevo",
+            "en": "Kevo",
+            "sv": "Kevo"
+        }
+    },
+    "KIL": {
+        "id": "KIL",
+        "threshold1": 61,
+        "threshold2": 210,
+        "names": {
+            "fi": "Kilpisjärvi",
+            "en": "Kilpisjärvi",
+            "sv": "Kilpisjärvi"
+        }
+    },
+    "IVA": {
+        "id": "IVA",
+        "threshold1": 72,
+        "threshold2": 275,
+        "names": {
+            "fi": "Ivalo",
+            "en": "Ivalo",
+            "sv": "Ivalo"
+        }
+    },
+    "MUO": {
+        "id": "MUO",
+        "threshold1": 75,
+        "threshold2": 300,
+        "names": {
+            "fi": "Muonio",
+            "en": "Muonio",
+            "sv": "Muonio"
+        }
+    },
+    "SOD": {
+        "id": "SOD",
+        "threshold1": 74,
+        "threshold2": 290,
+        "names": {
+            "fi": "Sodankylä",
+            "en": "Sodankylä",
+            "sv": "Sodankylä"
+        }
+    },
+    "PEL": {
+        "id": "PEL",
+        "threshold1": 73,
+        "threshold2": 285,
+        "names": {
+            "fi": "Pello",
+            "en": "Pello",
+            "sv": "Pello"
+        }
+    },
+    "RAN": {
+        "id": "RAN",
+        "threshold1": 70,
+        "threshold2": 240,
+        "names": {
+            "fi": "Ranua",
+            "en": "Ranua",
+            "sv": "Ranua"
+        }
+    },
+    "OUJ": {
+        "id": "OUJ",
+        "threshold1": 68,
+        "threshold2": 200,
+        "names": {
+            "fi": "Oulujärvi",
+            "en": "Oulujärvi",
+            "sv": "Oulujärvi"
+        }
+    },
+    "MEK": {
+        "id": "MEK",
+        "threshold1": 64,
+        "threshold2": 150,
+        "names": {
+            "fi": "Mekrijärvi",
+            "en": "Mekrijärvi",
+            "sv": "Mekrijärvi"
+        }
+    },
+    "HAN": {
+        "id": "HAN",
+        "threshold1": 63,
+        "threshold2": 140,
+        "names": {
+            "fi": "Hankasalmi",
+            "en": "Hankasalmi",
+            "sv": "Hankasalmi"
+        }
+    },
+    "NUR": {
+        "id": "NUR",
+        "threshold1": 60,
+        "threshold2": 120,
+        "names": {
+            "fi": "Nurmijärvi",
+            "en": "Nurmijärvi",
+            "sv": "Nurmijärvi"
+        }
+    },
+    "TAR": {
+        "id": "TAR",
+        "threshold1": 55,
+        "threshold2": 100,
+        "names": {
+            "fi": "Tartto",
+            "en": "Tartu",
+            "sv": "Tartu"
+        }
+    }
+};
 
 // Proxyjen määrä
 app.set('trust proxy', 1)
@@ -91,8 +199,25 @@ async function getLatestMeasurement(station) {
         let measurement = response.data[station].dataSeries[response.data[station].dataSeries.length-1]
         let timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
         let humanTimestamp = new Date(measurement[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
-        let thresholdAlert = (measurement[1] >= stations[station].threshold) ? true : false
-        return {"id":station,"fi-name":stations[station].names.fi,"value":measurement[1],"threshold":stations[station].threshold,"timestamp":humanTimestamp,"timestamp_epoch":timestamp,"exceedsThreshold": thresholdAlert}
+        /* 
+            REFACTOR BELOW:
+
+            Change to auroraProbability?
+            Threshold1 exceeds => LOW
+            Threshold2 exceeds => HIGH
+            Neither happens => NONE
+
+        */
+        if(measurement[1] >= stations[station].threshold1) {
+            var auroraProbability = "LOW"
+        } else if(measurement[1] >= stations[station].threshold2) {
+            var auroraProbability = "HIGH"
+        } else {
+            var auroraProbability = "NONE"
+        }
+        let threshol1dAlert = (measurement[1] >= stations[station].threshold1) ? true : false
+        let threshold2Alert = (measurement[1] >= stations[station].threshold2) ? true : false
+        return {"id":station,"fi-name":stations[station].names.fi,"value":measurement[1],"threshold":stations[station].threshold,"timestamp":humanTimestamp,"timestamp_epoch":timestamp,"exceedsThreshold1": threshol1dAlert,"exceedsThreshold2": threshold2Alert, "auroraProbability": auroraProbability}
       })
       .catch(function(error) {
         throw error
