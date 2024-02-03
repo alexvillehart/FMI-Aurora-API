@@ -17,11 +17,12 @@ const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minuuttia
     max: 10,
     message: {'error': 'Too many requests, try again later.'},
+    statusCode: 429,
     standardHeaders: true,
     legacyHeaders: false,
 })
 
-// Parametrit haettu FMI:n sivuilta 3.10.2022
+// Parametrit haettu FMI:n sivuilta 3.2.2024
 const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-graphs/serve-data.php'
 const stations = {
     "KEV": {
@@ -200,9 +201,8 @@ async function getLatestMeasurement(station) {
         let timestamp = measurement[0] + getTimezoneOffsetInMlliseconds()
         let humanTimestamp = new Date(measurement[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
         /* 
-            REFACTOR BELOW:
-
-            Change to auroraProbability?
+            auroraProbability:
+            
             Threshold1 exceeds => LOW
             Threshold2 exceeds => HIGH
             Neither happens => NONE
