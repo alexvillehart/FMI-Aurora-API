@@ -208,9 +208,9 @@ async function getLatestMeasurement(station) {
             Neither happens => NONE
 
         */
-        if(measurement[1] >= stations[station].threshold1) {
+        if(measurement[1] >= stations[station].threshold1 && measurement[1] <= stations[station].threshold2) {
             var auroraProbability = "LOW"
-        } else if(measurement[1] >= stations[station].threshold2) {
+        } else if(measurement[1] >= stations[station].threshold1 && measurement[1] >= stations[station].threshold2) {
             var auroraProbability = "HIGH"
         } else {
             var auroraProbability = "NONE"
