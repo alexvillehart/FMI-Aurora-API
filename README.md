@@ -84,7 +84,7 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
 ### JSON-vastaus
 
   
-
+```
 {
     id: kolmikirjaiminen tunnus asemasta (esim. NUR)
     names:                  Aseman selkokieliset nimet suomeksi, ruotsiksi ja englanniksi
@@ -98,7 +98,7 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
     timestamp_fi:           selkokielinen aikaleima YYYY-MM-DD HH:MM:SS suomen aikaa.
     epoch:                  UTC-aikaleima millisekunneissa. 
 }
-
+```
 
 ### Rate-limiting
 
