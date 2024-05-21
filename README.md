@@ -85,33 +85,23 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
 
   
 
-    {
-    
-    "id": "NUR",
-    // Aseman tunniste, jolla tiedot haettiin
-    
-    "fi-name": "Nurmijärvi",
-    // Suomenkielinen aseman nimi
-    
-    "value": 0.023, 
-    // Mitattu arvo nT/s
-    
-    "threshold": 0.3, 
-    // FMI:n määritelty raja-arvo nT/s
-    
-    "timestamp": "2022-10-03 22:20:00", 
-    // Kellonaika, jolloin havainto tehty suomen aikana (GMT +3 kesällä ja GMT +2 talvella)
-    
-    "timestamp_epoch": 1664824800000,
-    // UTC Aikaleima
-    
-    "exceedsThreshold": false
-    // Tosi jos mitattu arvo on sama tai yli raja-arvon.
-    
-    }
+{
+    id: kolmikirjaiminen tunnus asemasta (esim. NUR)
+    names:                  Aseman selkokieliset nimet suomeksi, ruotsiksi ja englanniksi
+        {fi, sv, en}
+    value:                  Viimeisin mitattu R-arvo.
+    low_threshold:          FMI:n määrittelemä R-arvo jolloin revontulet ovat mahdollisia
+    high_threshold:         FMI:n määrittelemä R-arvo jolloin revontulet ovat todennäköisiä
+    exceeds_low_threshold:  true jos ylittää low_thresholdin, muuten false
+    exceeds_high_threshold: true jos ylittää high_thresholdin, muuten false
+    aurora_probability:     [none, low, high] sen mukaisesti, ylittyvätkö em. raja-arvot.
+    timestamp_fi:           selkokielinen aikaleima YYYY-MM-DD HH:MM:SS suomen aikaa.
+    epoch:                  UTC-aikaleima millisekunneissa. 
+}
+
 
 ### Rate-limiting
 
-Kyselyiden määrä on rajoitettu 10 kyselyyn/15min, eli 40 kyselyyn tunnissa.
+Kyselyiden määrä on rajoitettu 25 kyselyyn/15min, eli 100 kyselyyn tunnissa.
 
-Havainnot päivittyvät ilmatieteen laitoksen sivuille 10 minuutin välein. 
+Havainnot päivittyvät ilmatieteen laitoksen sivuille 5-10 minuutin välein. 
