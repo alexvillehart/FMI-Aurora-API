@@ -100,6 +100,10 @@ Tuettujen mittauspisteiden sijainnin näet [Ilmatieteen laitoksen sivuilta](http
 }
 ```
 
+### V2-API
+
+Tulossa.
+
 ### Rate-limiting
 
 Kyselyiden määrä on rajoitettu 25 kyselyyn/15min, eli 100 kyselyyn tunnissa.
