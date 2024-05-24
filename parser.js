@@ -69,10 +69,26 @@ app.get('/latest/:station/', function(req, res) {
         })
     } else {
         console.log(UTCTimestamp() + "\t[ERROR]\t" + req.ip + "\tUser requested an unknown station or gave invalid input: " + station) 
-        var errorMsg = {"error":"Invalid user input"}
-        res.status(400).send(errorMsg)
+        var errorMsg = {"error":"Invalid user input, station not found"}
+        res.status(404).send(errorMsg)
     }
 })
+
+app.get('/v2/latest/:station', function(req, res) {
+    let station = req.params.station
+    if(validateStationInput(station)) {
+        console.log(UTCTimestamp() + "\t[GET /v2/latest/:station]\t" + req.ip + "\tUser requested details for station: " + station)
+    } else {
+        console.log(UTCTimestamp() + "\t[GET /v2/latest/:station]\t" + req.ip + "\tUser requested details for station: " + station + ". But it was not found.")  
+        res.status(404).send({"error":"Invalid user input, station not found.","statusCode":"404"})
+    }
+})
+
+function validateStationInput(station) {
+    station = station.toUpperCase()
+    let validation = /\b([A-Za-z]{3})\b/g
+    return validation.test(station) && station in stations
+}
 
 
 
