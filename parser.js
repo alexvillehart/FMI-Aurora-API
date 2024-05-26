@@ -17,7 +17,10 @@ const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-gr
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minuuttia
     max: 25,
-    message: {'error': 'Too many requests, try again later.'},
+    message: {'error': {
+            message: 'Too many requests, try again later.',
+            code: 429
+        }},
     statusCode: 429,
     standardHeaders: true,
     legacyHeaders: false,
@@ -69,7 +72,11 @@ app.get('/latest/:station/', function(req, res) {
         })
     } else {
         console.log(UTCTimestamp() + "\t[ERROR]\t" + req.ip + "\tUser requested an unknown station or gave invalid input: " + station) 
-        let errorMsg = {"error":"Invalid user input, station not found"}
+        let errorMsg = {"error": {
+                'message': 'Station not found',
+                'acceptable-input':  Object.keys(stations),
+                'code': 404
+            }}
         res.status(404).send(errorMsg)
     }
 })
@@ -90,10 +97,9 @@ async function getAllStationsLatestMeasurement() {
                     // Asemalta ei ole havaintoja saatavissa lainkaan. Voidaan lähettää vaikka dummy-dataa tai sitten ei mitään.
                     // TODO: HUOMIOI TÄMÄ V2-API suunnittelussa
                     measurements[station] = {
-                        id: station,
-                        value: -1,
                         error: {
-                            message: 'Unable to fetch data for station.',
+                            id: station,
+                            message: 'Unable to receive station data',
                             code: 204
                         },
 
