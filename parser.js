@@ -100,7 +100,6 @@ async function getAllStationsLatestMeasurement() {
                     }
                 }
             }
-            console.log(measurements)
             return measurements
         })
         .catch(function(error) {
