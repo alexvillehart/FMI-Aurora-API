@@ -1,9 +1,9 @@
-import express, { request } from 'express'
+import express from 'express'
 import axios from 'axios'
 import rateLimit from 'express-rate-limit'
 import cron from 'node-cron'
 import { stations } from './stations.js'
-
+import { getTimezoneOffsetInMlliseconds, UTCTimestamp} from "./utils.js";
 // timestamp-arvon muuttamiseen.
 process.env['TZ'] = 'Europe/Helsinki'
 
@@ -39,7 +39,7 @@ app.get('/', function(req, res) {
     res.status(404).send('Resources asked for not found.')
 })
 
-var cache = {
+const cache = {
     data: {},
     timestamp: 0
 }
@@ -64,31 +64,15 @@ app.get('/latest/:station/', function(req, res) {
         })
         .catch((error) => {
             console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] " + error.message)
-            var errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
+            let errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
             res.status(500).send(errorMsg)
         })
     } else {
         console.log(UTCTimestamp() + "\t[ERROR]\t" + req.ip + "\tUser requested an unknown station or gave invalid input: " + station) 
-        var errorMsg = {"error":"Invalid user input, station not found"}
+        let errorMsg = {"error":"Invalid user input, station not found"}
         res.status(404).send(errorMsg)
     }
 })
-
-app.get('/v2/latest/:station', function(req, res) {
-    let station = req.params.station
-    if(validateStationInput(station)) {
-        console.log(UTCTimestamp() + "\t[GET /v2/latest/:station]\t" + req.ip + "\tUser requested details for station: " + station)
-    } else {
-        console.log(UTCTimestamp() + "\t[GET /v2/latest/:station]\t" + req.ip + "\tUser requested details for station: " + station + ". But it was not found.")  
-        res.status(404).send({"error":"Invalid user input, station not found.","statusCode":"404"})
-    }
-})
-
-function validateStationInput(station) {
-    station = station.toUpperCase()
-    let validation = /\b([A-Za-z]{3})\b/g
-    return validation.test(station) && station in stations
-}
 
 
 
@@ -98,13 +82,29 @@ async function getAllStationsLatestMeasurement() {
         .then(function(response) {
             let data = response.data
             for(const station in stations) {
-                let dataSerie = data[station].dataSeries
-                measurements[station] = parseMeasurement(station, dataSerie[dataSerie.length-1])
+                try {
+                    let dataSerie = data[station].dataSeries
+                    measurements[station] = parseMeasurement(station, dataSerie[dataSerie.length-1])
+                } catch(error) {
+                    console.log(UTCTimestamp() + "\t[ERROR]\t Measurement station: " + station + "\tMessage:" + error + "\t(Aseman havainnot pois käytöstä?)")
+                    // Asemalta ei ole havaintoja saatavissa lainkaan. Voidaan lähettää vaikka dummy-dataa tai sitten ei mitään.
+                    // TODO: HUOMIOI TÄMÄ V2-API suunnittelussa
+                    measurements[station] = {
+                        id: station,
+                        value: -1,
+                        error: {
+                            message: 'Unable to fetch data for station.',
+                            code: 204
+                        },
+
+                    }
+                }
             }
+            console.log(measurements)
             return measurements
         })
         .catch(function(error) {
-            console.log(UTCTimestamp() + "\t[ERROR]\tgetAllStationsLatestMeasurement encountered an error with the HTTP request: " + error)
+            console.log(UTCTimestamp() + "\t[ERROR]\tgetAllStationsLatestMeasurement encountered an error: " + error)
             return false
         })
 }
@@ -129,11 +129,11 @@ function parseMeasurement(stationIdentifier, data) {
     let timestamp           = data[0] + getTimezoneOffsetInMlliseconds()
     let prettyTimestamp     = new Date(data[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
     let latestValue         = (data[1] === null) ? -1 : parseFloat(data[1].toFixed(2))
-    let station             = stations[stationIdentifier]
+    let station                         = stations[stationIdentifier]
 
 
-    let exceeds_low_threshold = (latestValue >= station.low_threshold) ? true : false
-    let exceeds_high_threshold = (latestValue >= station.high_threshold) ? true: false
+    let exceeds_low_threshold = (latestValue >= station.low_threshold)
+    let exceeds_high_threshold = (latestValue >= station.high_threshold)
 
 
     if(latestValue >= station.low_threshold && latestValue <= station.high_threshold) {
@@ -163,15 +163,5 @@ async function getLatestCachedMeasurement(station) {
     return cache.data[station]
 }
 
-// Korjaa FMI:n bugin jossa epoch-aikaleima annetaan UTC muodossa mutta suomen aikaan.
-function getTimezoneOffsetInMlliseconds() {
-    return new Date(Date.now()).getTimezoneOffset() * 60000
-}
 
-// Luo UTC aikaleiman muodossa DD-MM-YYYY HH:MM Z
-function UTCTimestamp() {
-    let date = new Date(Date.now())
-    let timestamp = ("0" + date.getUTCDate()).slice(-2) + "." + ("0" + date.getUTCMonth()).slice(-2) + "." + date.getUTCFullYear() + " " + ("0" + date.getUTCHours()).slice(-2) + ":" + ("0" + date.getUTCMinutes()).slice(-2) + ":" + ("0" + date.getUTCSeconds()).slice(-2) + "Z"
-    return timestamp
-}
 
