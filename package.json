@@ -1,12 +1,13 @@
 {
   "name": "aurora-borealis",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Parse FMI Aurora Borealis data to get latest value",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "run": "node parser.js",
-    "dev": "nodemon parser.js"
+    "run": "node server.js",
+    "prod": "pm2 server.js",
+    "dev": "nodemon server.js"
   },
   "author": "Alex Haaja",
   "license": "ISC",
