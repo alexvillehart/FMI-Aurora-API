@@ -129,7 +129,7 @@ async function getAllStationsLatestMeasurement() {
 
 */
 
-function parseMeasurement(stationIdentifier, data) {
+export function parseMeasurement(stationIdentifier, data) {
     let auroraProbability
     let timestamp           = data[0] + getTimezoneOffsetInMlliseconds()
     let prettyTimestamp     = new Date(data[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
@@ -167,6 +167,8 @@ function parseMeasurement(stationIdentifier, data) {
 async function getLatestCachedMeasurement(station) {
     return cache.data[station]
 }
+
+
 
 
 
