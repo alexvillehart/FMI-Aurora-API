@@ -1,5 +1,5 @@
-import {app, cache} from "./api.js";
-import {UTCTimestamp, getAllStationsLatestMeasurement} from "./utils.js";
+import {app, initializeCache} from "./api.js";
+import {UTCTimestamp} from "./utils.js";
 import rateLimit from "express-rate-limit";
 
 const port = 3005
@@ -19,13 +19,10 @@ const limiter = rateLimit({
 })
 
 app.set('trust proxy', 1)
+// noinspection JSCheckFunctionSignatures
 app.use(limiter)
 
 app.listen(port, () => {
     console.info("[INIT]\t" + timestamp + "\tListening on port", port)
-    getAllStationsLatestMeasurement().then(function(x) {
-        cache.data = x
-        cache.timestamp = UTCTimestamp()
-        console.info("[CACHE]\t" + UTCTimestamp() + "\tGenerated initial cache")
-    })
+    initializeCache()
 })

@@ -21,6 +21,7 @@ export async function getAllStationsLatestMeasurement() {
             let data = response.data
             for(const station in stations) {
                 try {
+                    // noinspection JSUnresolvedReference
                     let dataSerie = data[station].dataSeries
                     measurements[station] = parseMeasurement(station, dataSerie[dataSerie.length-1])
                 } catch(error) {

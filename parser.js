@@ -3,7 +3,7 @@ import axios from 'axios'
 import rateLimit from 'express-rate-limit'
 import cron from 'node-cron'
 import { stations } from './stations.js'
-import { getTimezoneOffsetInMlliseconds, UTCTimestamp} from "./utils.js";
+import { getTimezoneOffsetInMilliseconds, UTCTimestamp} from "./utils.js";
 // timestamp-arvon muuttamiseen.
 process.env['TZ'] = 'Europe/Helsinki'
 
@@ -131,7 +131,7 @@ async function getAllStationsLatestMeasurement() {
 
 export function parseMeasurement(stationIdentifier, data) {
     let auroraProbability
-    let timestamp           = data[0] + getTimezoneOffsetInMlliseconds()
+    let timestamp           = data[0] + getTimezoneOffsetInMilliseconds()
     let prettyTimestamp     = new Date(data[0]).toISOString().replace(/T/, ' ').replace(/\..+/, '')
     let latestValue         = (data[1] === null) ? -1 : parseFloat(data[1].toFixed(2))
     let station                         = stations[stationIdentifier]
