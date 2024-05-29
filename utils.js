@@ -14,6 +14,12 @@ export function UTCTimestamp() {
     return ("0" + date.getUTCDate()).slice(-2) + "." + ("0" + date.getUTCMonth()).slice(-2) + "." + date.getUTCFullYear() + " " + ("0" + date.getUTCHours()).slice(-2) + ":" + ("0" + date.getUTCMinutes()).slice(-2) + ":" + ("0" + date.getUTCSeconds()).slice(-2) + "Z"
 }
 
+// validates if
+export function ValidateUserInput(input) {
+    let UserInputRegex = /\b([A-Za-z]{3})\b/g
+    return (UserInputRegex.test(input) && input.toUpperCase() in stations)
+}
+
 export async function getAllStationsLatestMeasurement() {
     let measurements = {}
     return await axios.get(request_uri)
@@ -26,8 +32,7 @@ export async function getAllStationsLatestMeasurement() {
                     measurements[station] = parseMeasurement(station, dataSerie[dataSerie.length-1])
                 } catch(error) {
                     console.error("[ERROR]\t" + UTCTimestamp() + "\tMeasurement station " + station + ": " + error + " (Asema pois käytöstä?)")
-                    // Asemalta ei ole havaintoja saatavissa lainkaan. Voidaan lähettää vaikka dummy-dataa tai sitten ei mitään.
-                    // TODO: HUOMIOI TÄMÄ V2-API suunnittelussa
+                    // Asemalta ei ole havaintoja saatavilla, joten aseman tilalle laitetaan virheviesti.
                     measurements[station] = {
                         error: {
                             id: station,
@@ -93,5 +98,20 @@ function parseMeasurement(stationIdentifier, data) {
         "timestamp_fi": prettyTimestamp,
         "epoch":  timestamp
     }
-
+    /* FOR LATER USER, BETTER FORMATTING OF CURRENT JSON RESPONSE.
+    return {
+        "id": stationIdentifier,
+        "names": station.names,
+        "value": latestValue,
+        "thresholds": {
+            "low": station.low_threshold,
+            "high": station.high_threshold,
+            "exceeds_low": exceeds.low_threshold,
+            "exceeds_high": exceeds.high_threshold
+        },
+        "aurora_probability": auroraProbability,
+        "timestamp_fi": prettyTimestamp,
+        "epoch":  timestamp
+    }
+    */
 }

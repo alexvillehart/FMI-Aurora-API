@@ -1,5 +1,6 @@
-import {app, initializeCache} from "./api.js";
+import {app} from "./v1-api.js";
 import {UTCTimestamp} from "./utils.js";
+import {initializeCache} from "./cache.js";
 import rateLimit from "express-rate-limit";
 
 const port = 3005

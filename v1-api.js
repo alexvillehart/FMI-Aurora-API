@@ -1,37 +1,23 @@
 import express from 'express'
-import cron from "node-cron";
 import {stations} from "./stations.js";
-import {getAllStationsLatestMeasurement, UTCTimestamp} from "./utils.js";
+import {UTCTimestamp, ValidateUserInput} from "./utils.js";
+import {getAllCachedMeasurements, getStationCachedMeasurement} from "./cache.js";
 
 process.env['TZ'] = 'Europe/Helsinki'
 export const app = express()
 
-const cache = {
-    data: {},
-    timestamp: 0
-}
-
-cron.schedule('4,8,14,18,24,28,34,38,44,48,54,58 * * * *', () => {
-    console.info("[CRON]\t" + UTCTimestamp() + " Started cron job...")
-    getAllStationsLatestMeasurement().then(function(result) {
-        cache.data = result
-        cache.timestamp = Date.now()
-        console.info(`[CACHE]\t${UTCTimestamp()}\tRenewed cached data`)
+app.get('/v1/latest', function(req, res) {
+    console.info("[GET]\t" + UTCTimestamp() + "\t" + req.ip + "\tUser requested details for all stations")
+    return getAllCachedMeasurements().then((data) => {
+        res.status(200).json(data)
     })
 })
 
-app.get('/v1/latest', function(req, res) {
-    console.info("[GET]\t" + UTCTimestamp() + "\t" + req.ip + "\tUser requested details for all stations")
-    res.status(200).json(cache.data)
-})
-
 app.get('/v1/latest/:station/', function(req, res) {
-    // validoi käyttäjän syöttö ja varmista että löytyy saatavilla olevista asemista.
-    let validation = /\b([A-Za-z]{3})\b/g
-    let station = req.params.station.toUpperCase()
-    if(station.match(validation) && station in stations) {
+    let station = req.params["station"].toUpperCase()
+    if(ValidateUserInput(station)) {
         console.info("[GET]\t" + UTCTimestamp() + "\t" + req.ip + "\tUser requested details for station: " + station)
-        return getLatestCachedMeasurement(station).then((response) => {
+        return getStationCachedMeasurement(station).then((response) => {
             res.json(response)
         })
             .catch((error) => {
@@ -53,14 +39,3 @@ app.get('/v1/latest/:station/', function(req, res) {
     }
 })
 
-export function initializeCache() {
-    getAllStationsLatestMeasurement().then(function(x) {
-        cache.data = x
-        cache.timestamp = UTCTimestamp()
-        console.info(`[CACHE]\t${UTCTimestamp()}\tGenerated initial cache`)
-    })
-}
-
-async function getLatestCachedMeasurement(station) {
-    return cache.data[station]
-}
