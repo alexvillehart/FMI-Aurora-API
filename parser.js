@@ -3,12 +3,15 @@ import axios from 'axios'
 import rateLimit from 'express-rate-limit'
 import cron from 'node-cron'
 import { stations } from './stations.js'
-import { getTimezoneOffsetInMlliseconds, UTCTimestamp} from "./utils.js";
+import { getTimezoneOffsetInMlliseconds, UTCTimestamp} from "./utils.js"
+import { initializeOpenTelemetry, logger, metricsMiddleware } from './otel.js'
+import dotenv from 'dotenv'
+dotenv.config()
 // timestamp-arvon muuttamiseen.
 process.env['TZ'] = 'Europe/Helsinki'
 
 const app = express()
-const port = 3005
+const port = process.env.PORT || 3005
 const request_uri = 'https://cdn.fmi.fi/apps/magnetic-disturbance-observation-graphs/serve-data.php'
 
 
@@ -28,12 +31,16 @@ const limiter = rateLimit({
 
 // Proxyjen määrä
 app.set('trust proxy', 1)
+app.use(metricsMiddleware)
 app.use(limiter)
 app.listen(port, () => {
+    initializeOpenTelemetry()
     console.log(UTCTimestamp() + "\t[APP]\tStarted listening on port " + port)
+    logger.info(`Application has started on port ${port}`)
     getAllStationsLatestMeasurement().then(function(x) {
         cache.data = x
         cache.timestamp = UTCTimestamp()
+        logger.info('Cache generated')
         console.log(UTCTimestamp() + "\t[CACHE]\tGenerated initial cache")
     })
 })
@@ -68,6 +75,7 @@ app.get('/latest/:station/', function(req, res) {
         .catch((error) => {
             console.log(UTCTimestamp() + " | " + req.ip + " [ERROR] " + error.message)
             let errorMsg = {"error":"Something went wrong, possibly with the FMI CDN"}
+            logger.error('Something went wrong fetching station details. Possibly with the CDN.')
             res.status(500).send(errorMsg)
         })
     } else {
@@ -96,6 +104,7 @@ async function getAllStationsLatestMeasurement() {
                     console.log(UTCTimestamp() + "\t[ERROR]\t Measurement station: " + station + "\tMessage:" + error + "\t(Aseman havainnot pois käytöstä?)")
                     // Asemalta ei ole havaintoja saatavissa lainkaan. Voidaan lähettää vaikka dummy-dataa tai sitten ei mitään.
                     // TODO: HUOMIOI TÄMÄ V2-API suunnittelussa
+                    logger.error('Unable to fetch station details')
                     measurements[station] = {
                         error: {
                             id: station,
@@ -110,6 +119,7 @@ async function getAllStationsLatestMeasurement() {
         })
         .catch(function(error) {
             console.log(UTCTimestamp() + "\t[ERROR]\tgetAllStationsLatestMeasurement encountered an error: " + error)
+            logger.error(`Something went wrong fetching latest measurements ${error}`)
             return false
         })
 }
